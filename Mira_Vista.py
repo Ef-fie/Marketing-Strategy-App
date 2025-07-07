@@ -58,7 +58,7 @@ cluster_profiles = {
             "📧 Send regular emails with curated value offerings and lifestyle tips.",
             "🕰️ Offer relaxed shopping hours and personalized in-store assistance."
         ],
-        "bgcolor": "#0C0C0C"
+        "bgcolor": "#F9F6F6"
     },
     1: {
         "name": "Affluent Minimalists",

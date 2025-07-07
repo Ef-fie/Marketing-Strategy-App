@@ -20,26 +20,54 @@ st.markdown(
 df = pd.read_excel("customers_with_clusters.xlsx")
 
 # Showing a colorful scatter plot of the clusters
+# Showing a colorful scatter plot of the clusters with key
 st.subheader("Customer Clusters")
 
+cluster_name_map = {
+    0: "Practical Professionals",
+    1: "Affluent Minimalists",
+    2: "Vibrant Spenders"
+}
+
+legend ={
+    0: "#96317a",
+    1: "#5E9162",
+    2: "#C55C15",
+    
+}
+
+
 fig, ax = plt.subplots()
-scatter = ax.scatter(
-    df['Annual Income (k$)'],
-    df['Spending Score (1-100)'],
-    c=df['Cluster'],
-    cmap='Set2',
+
+# Plot each cluster individually to include a legend
+for cluster_num, cluster_name in cluster_name_map.items():
+    cluster_data = df[df['Cluster'] == cluster_num]
+    ax.scatter(
+        cluster_data['Annual Income (k$)'],
+    cluster_data['Spending Score (1-100)'],
     s=80,
+    color=legend[cluster_num],
     edgecolors='black'
-)
+    )
+
 ax.set_xlabel("Annual Income (k$)")
 ax.set_ylabel("Spending Score (1–100)")
 ax.set_title("Customer Segments at Mira Vista")
 st.pyplot(fig)
 
+#Display the key below the plot
+st.markdown("### Cluster Key")
+for num, name in cluster_name_map.items():
+    st.markdown(f" **Cluster {num}** - {name}") 
+
+
+
 # Showing average traits for each cluster group
 st.subheader("Cluster Insights")
 summary = df.groupby('Cluster')[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']].mean().round(1)
+summary.rename(index=cluster_name_map, inplace=True)
 st.dataframe(summary)
+
 
 # Interactive Profile Selector
 st.markdown("---")
@@ -91,7 +119,9 @@ cluster_profiles = {
 }
 
 # Selection and button UI
-selected_cluster = st.selectbox("Choose a Cluster (0, 1 or 2):", options=sorted(cluster_profiles.keys()))
+cluster_name_to_id = {v["name"]: k for k, v in cluster_profiles.items()}
+selected_name = st.selectbox("Choose a Cluster Profile:", options=cluster_name_to_id.keys())
+selected_cluster = cluster_name_to_id[selected_name]
 show = st.button("Submit")
 
 if show:

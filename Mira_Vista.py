@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-
+#page logo 
+st.image("mira_vista.jpg", width=150)
 # Page configuration
 st.set_page_config(
     page_title="Mira Vista Segmentation",

@@ -1,14 +1,17 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-#page logo 
-st.image("mira_vista.jpg", width=350)
+import joblib
+import numpy as np
+
 # Page configuration
 st.set_page_config(
     page_title="Mira Vista Segmentation",
     page_icon="🛍️",
     layout="centered"
 )
+#page logo 
+st.image("mira_vista.jpg", width=350)
 
 # App title and intro
 st.title("🛍️ Mira Vista Mall - Customer Segmentation Dashboard")
@@ -70,9 +73,9 @@ summary.rename(index=cluster_name_map, inplace=True)
 st.dataframe(summary)
 
 
-# Interactive Profile Selector
+#Profile Selector
 st.markdown("---")
-st.subheader("🧠 Explore Cluster Profiles & Strategy")
+st.header("🧠 Explore Cluster Profiles & Strategy")
 
 cluster_profiles = {
     0: {
@@ -119,22 +122,32 @@ cluster_profiles = {
     }
 }
 
-# Selection and button UI
-cluster_name_to_id = {v["name"]: k for k, v in cluster_profiles.items()}
-selected_name = st.selectbox("Choose a Cluster Profile:", options=cluster_name_to_id.keys())
-selected_cluster = cluster_name_to_id[selected_name]
-show = st.button("Submit")
+# Loading the model
+kmeans = joblib.load("kmeans_model.pkl")
+model = joblib.load("kmeans_model.pkl")
+# user prediction section
+st.subheader("Enter Customer Information😊")
+st.markdown("Customer's age")
+age = st.number_input("Age", min_value=18, max_value=100, step=1)
+st.markdown("Select the annual income of the customer in $1000")
+annual_income = st.number_input("Annual Income (in $1000)", min_value=0, max_value=200, step=1)
+st.markdown("Select the spending score of the customer from 1 to 100")
+spending_score = st.number_input("Spending Score (1-100)", min_value=1, max_value=100, step=1)
 
-if show:
-    data = cluster_profiles[selected_cluster]
+if st.button("Predict Customer Cluster"):
+    input_data = np.array([[age, annual_income, spending_score]])
+    predicted_cluster = model.predict(input_data)[0]
+    profile = cluster_profiles[predicted_cluster]
+    st.success(f"✅ This customer belongs to: **Cluster {predicted_cluster} – {profile['name']}**")
+
     st.markdown(
         f"""
-        <div style='background-color:{data["bgcolor"]}; padding:20px; border-radius:10px; margin-top:15px'>
-            <h3 style='color:#333;'>Cluster {selected_cluster}: {data["name"]}</h3>
-            <p>{data["description"]}</p>
-            <h4>Recommended Marketing Tactics:</h4>
+        <div style='background-color:{profile["bgcolor"]}; padding:20px; border-radius:10px; margin-top:15px'>
+            <h4>Customer Profile: {profile["name"]}</h4>
+            <p>{profile["description"]}</p>
+            <h5>Recommended Tactics:</h5>
             <ul>
-                {''.join(f"<li>{s}</li>" for s in data["strategies"])}
+                {''.join(f"<li>{s}</li>" for s in profile["strategies"])}
             </ul>
         </div>
         """,

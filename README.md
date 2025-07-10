@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import joblib
+import numpy as np
 
 # Page configuration
 st.set_page_config(
@@ -8,6 +10,8 @@ st.set_page_config(
     page_icon="🛍️",
     layout="centered"
 )
+#page logo 
+st.image("mira_vista.jpg", width=350)
 
 # App title and intro
 st.title("🛍️ Mira Vista Mall - Customer Segmentation Dashboard")
@@ -17,33 +21,61 @@ st.markdown(
 )
 
 # Load the clustered Excel dataset
-df = pd.read_excel("C:/Users/effie/OneDrive - Strathmore University/Documents/Mall_Customers.xlsx")
+df = pd.read_excel("customers_with_clusters.xlsx")
 
 # Showing a colorful scatter plot of the clusters
+# Showing a colorful scatter plot of the clusters with key
 st.subheader("Customer Clusters")
 
+cluster_name_map = {
+    0: "Practical Professionals",
+    1: "Affluent Minimalists",
+    2: "Vibrant Spenders"
+}
+
+legend ={
+    0: "#22094B",
+    1: "#5E9162",
+    2: "#C00D0D",
+    
+}
+
+
 fig, ax = plt.subplots()
-scatter = ax.scatter(
-    df['Annual Income (k$)'],
-    df['Spending Score (1-100)'],
-    c=df['Cluster'],
-    cmap='Set2',
+
+# Plot each cluster individually to include a legend
+for cluster_num, cluster_name in cluster_name_map.items():
+    cluster_data = df[df['Cluster'] == cluster_num]
+    ax.scatter(
+        cluster_data['Annual Income (k$)'],
+    cluster_data['Spending Score (1-100)'],
     s=80,
+    color=legend[cluster_num],
     edgecolors='black'
-)
+    )
+
 ax.set_xlabel("Annual Income (k$)")
 ax.set_ylabel("Spending Score (1–100)")
 ax.set_title("Customer Segments at Mira Vista")
 st.pyplot(fig)
 
+#Display the key below the plot
+st.markdown("### Cluster Key")
+for num, name in cluster_name_map.items():
+    st.markdown(f" **Cluster {num}** - {name}") 
+
+
+
 # Showing average traits for each cluster group
 st.subheader("Cluster Insights")
 summary = df.groupby('Cluster')[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']].mean().round(1)
+summary.rename(index=cluster_name_map, inplace=True)
 st.dataframe(summary)
 
-# Interactive Profile Selector
+
+#Profile Selector
 st.markdown("---")
-st.subheader("🧠 Explore Cluster Profiles & Strategy")
+st.header("🧠 Explore Cluster Profiles & Strategy")
 
 cluster_profiles = {
     0: {
@@ -58,7 +90,7 @@ cluster_profiles = {
             "📧 Send regular emails with curated value offerings and lifestyle tips.",
             "🕰️ Offer relaxed shopping hours and personalized in-store assistance."
         ],
-        "bgcolor": "#E8F5E9"
+        "bgcolor": "#F9F6F6"
     },
     1: {
         "name": "Affluent Minimalists",
@@ -90,20 +122,32 @@ cluster_profiles = {
     }
 }
 
-# Selection and button UI
-selected_cluster = st.selectbox("Choose a Cluster (0, 1 or 2):", options=sorted(cluster_profiles.keys()))
-show = st.button("Submit")
+# Loading the model
+kmeans = joblib.load("kmeans_model.pkl")
+model = joblib.load("kmeans_model.pkl")
+# user prediction section
+st.subheader("Enter Customer Information😊")
+st.markdown("Customer's age")
+age = st.number_input("Age", min_value=18, max_value=100, step=1)
+st.markdown("Select the annual income of the customer in $1000")
+annual_income = st.number_input("Annual Income (in $1000)", min_value=0, max_value=200, step=1)
+st.markdown("Select the spending score of the customer from 1 to 100")
+spending_score = st.number_input("Spending Score (1-100)", min_value=1, max_value=100, step=1)
 
-if show:
-    data = cluster_profiles[selected_cluster]
+if st.button("Predict Customer Cluster"):
+    input_data = np.array([[age, annual_income, spending_score]])
+    predicted_cluster = model.predict(input_data)[0]
+    profile = cluster_profiles[predicted_cluster]
+    st.success(f"✅ This customer belongs to: **Cluster {predicted_cluster} – {profile['name']}**")
+
     st.markdown(
         f"""
-        <div style='background-color:{data["bgcolor"]}; padding:20px; border-radius:10px; margin-top:15px'>
-            <h3 style='color:#333;'>Cluster {selected_cluster}: {data["name"]}</h3>
-            <p>{data["description"]}</p>
-            <h4>Recommended Marketing Tactics:</h4>
+        <div style='background-color:{profile["bgcolor"]}; padding:20px; border-radius:10px; margin-top:15px'>
+            <h4>Customer Profile: {profile["name"]}</h4>
+            <p>{profile["description"]}</p>
+            <h5>Recommended Tactics:</h5>
             <ul>
-                {''.join(f"<li>{s}</li>" for s in data["strategies"])}
+                {''.join(f"<li>{s}</li>" for s in profile["strategies"])}
             </ul>
         </div>
         """,
@@ -217,5 +261,4 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-)# Marketing-Strategy-App
-An app that provides marketing strategies for different clusters of shoppers.
+)

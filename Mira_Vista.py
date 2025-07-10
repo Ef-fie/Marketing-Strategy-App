@@ -2,7 +2,20 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 #page logo 
-st.image("mira_vista.jpg", width=350)
+#st.image("mira_vista.jpg", width=350)
+st.markdown(
+    """
+    <div style='text-align: center;'>
+        <img src='data:image/png;base64,{}' width='350'>
+    </div>
+    """.format(
+        st.session_state.get("logo_base64") if "logo_base64" in st.session_state else
+        __import__("base64").b64encode(open("mira_vista.jpg", "rb").read()).decode()
+    ),
+    unsafe_allow_html=True
+)
+
+
 # Page configuration
 st.set_page_config(
     page_title="Mira Vista Segmentation",
@@ -40,21 +53,38 @@ legend ={
 
 fig, ax = plt.subplots()
 
-# Plot each cluster individually to include a legend
 for cluster_num, cluster_name in cluster_name_map.items():
     cluster_data = df[df['Cluster'] == cluster_num]
     ax.scatter(
         cluster_data['Annual Income (k$)'],
-    cluster_data['Spending Score (1-100)'],
-    s=80,
-    color=legend[cluster_num],
-    edgecolors='black'
+        cluster_data['Spending Score (1-100)'],
+        s=80,
+        color=legend[cluster_num],
+        edgecolors='black',
+        label=f"{cluster_name} (Cluster {cluster_num})"
     )
 
 ax.set_xlabel("Annual Income (k$)")
 ax.set_ylabel("Spending Score (1–100)")
 ax.set_title("Customer Segments at Mira Vista")
+
+# ✨ Expand canvas for legend space
+fig.subplots_adjust(right=0.75)
+
+# ✅ Legend outside plot, no squeeze
+ax.legend(
+    title="Customer Segments",
+    loc='center left',
+    bbox_to_anchor=(1.02, 0.5),
+    frameon=True,
+    fontsize=9,
+    title_fontsize=10,
+    labelspacing=0.4,
+    borderpad=0.5
+)
+
 st.pyplot(fig)
+
 
 #Display the key below the plot
 st.markdown("### Cluster Key")

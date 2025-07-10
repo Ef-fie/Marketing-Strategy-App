@@ -1,4 +1,10 @@
 import streamlit as st
+# Page configuration
+st.set_page_config(
+    page_title="Mira Vista Segmentation",
+    page_icon="🛍️",
+    layout="centered"
+)
 import pandas as pd
 import matplotlib.pyplot as plt
 #page logo 
@@ -13,14 +19,6 @@ st.markdown(
         __import__("base64").b64encode(open("mira_vista.jpg", "rb").read()).decode()
     ),
     unsafe_allow_html=True
-)
-
-
-# Page configuration
-st.set_page_config(
-    page_title="Mira Vista Segmentation",
-    page_icon="🛍️",
-    layout="centered"
 )
 
 # App title and intro
